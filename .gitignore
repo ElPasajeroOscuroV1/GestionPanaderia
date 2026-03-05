@@ -1,18 +1,39 @@
-#Node
-AngularFrontEnd/node_modules
-AngularFrontEnd/dist
+# =========================
+# Node / Angular
+# =========================
+AngularFrontEnd/node_modules/
+AngularFrontEnd/dist/
+AngularFrontEnd/.angular/
+AngularFrontEnd/.vscode/
+AngularFrontEnd/coverage/
 
-#Angular
-AngularFrontEnd/.angular
+# Logs
+AngularFrontEnd/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-#Laravel
-LaravelBackEnd/vendor
-LaravelBackEnd/node_modules
+# =========================
+# Laravel
+# =========================
+LaravelBackEnd/vendor/
+LaravelBackEnd/node_modules/
+LaravelBackEnd/public/storage
+LaravelBackEnd/storage/*.key
 LaravelBackEnd/.env
 
-#Logs
-*.log
+# Laravel logs & cache
+LaravelBackEnd/storage/logs/
+LaravelBackEnd/storage/framework/cache/
+LaravelBackEnd/storage/framework/sessions/
+LaravelBackEnd/storage/framework/views/
+LaravelBackEnd/bootstrap/cache/
 
-#OS
+# =========================
+# General
+# =========================
+*.log
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
