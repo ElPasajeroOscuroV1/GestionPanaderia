@@ -1,0 +1,14 @@
+<h2>Inventario</h2>
+
+<table border="1">
+  <tr>
+    <th>Ingrediente</th>
+    <th>Stock (libras)</th>
+  </tr>
+
+  <tr *ngFor="let i of ingredientes">
+    <td>{{i.nombre}}</td>
+    <td>{{i.stock_libras}}</td>
+  </tr>
+
+</table>

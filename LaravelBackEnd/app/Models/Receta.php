@@ -14,7 +14,14 @@ class Receta extends Model
                     ->withTimestamps();
     }
     */
-    
+
+    protected $table = 'recetas';
+
+    protected $fillable = [
+        'nombre',
+        'descripcion'
+    ];
+
     public function ingredientes()
     {
         return $this->belongsToMany(
