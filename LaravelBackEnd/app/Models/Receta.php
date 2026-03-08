@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Ingrediente;
+use App\Models\Producto;
 
 class Receta extends Model
 {
@@ -31,5 +32,10 @@ class Receta extends Model
             'receta_id',
             'ingrediente_id'
         )->withPivot('cantidad_libras');
+    }
+
+    public function productos()
+    {
+        return $this->hasMany(Producto::class);
     }
 }

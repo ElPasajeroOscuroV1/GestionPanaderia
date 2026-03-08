@@ -7,10 +7,17 @@ use App\Models\Produccion;
 use App\Models\Receta;
 use App\Models\Ingrediente;
 use Illuminate\Support\Facades\DB;
+use App\Models\Producto;
 
 class ProduccionController extends Controller
 {
     //
+    public function index()
+    {
+        $producciones = Produccion::with('receta')->get();
+
+        return response()->json($producciones);
+    }
     /*
     public function store(Request $request)
     {
@@ -63,6 +70,7 @@ class ProduccionController extends Controller
         ]);
     }
     */
+    /*
     public function store(Request $request)
     {
         $request->validate([
@@ -112,10 +120,87 @@ class ProduccionController extends Controller
                 );
             }
 
+            // Buscar producto asociado a la receta
+            $producto = Producto::where('receta_id', $receta->id)->first();
+
+            if ($producto) {
+                $producto->increment('stock', $request->cantidad);
+            }
+
+            throw new \Exception(
+                'Inventario insuficiente para el ingrediente: ' . $ingrediente->nombre
+            );
+        });
+    }
+    */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'receta_id' => 'required|exists:recetas,id',
+            'cantidad' => 'required|numeric|min:1',
+            'fecha' => 'required|date'
+        ]);
+
+        try {
+
+            $produccion = DB::transaction(function () use ($request) {
+
+                $receta = Receta::with('ingredientes')
+                    ->findOrFail($request->receta_id);
+
+                // Verificar inventario
+                foreach ($receta->ingredientes as $ingrediente) {
+
+                    $cantidadNecesaria =
+                        $ingrediente->pivot->cantidad_libras * $request->cantidad;
+
+                    if ($ingrediente->stock_libras < $cantidadNecesaria) {
+
+                        throw new \Exception(
+                            'Inventario insuficiente para ' . $ingrediente->nombre
+                        );
+                    }
+                }
+
+                // Crear producción
+                $produccion = Produccion::create([
+                    'receta_id' => $receta->id,
+                    'cantidad' => $request->cantidad,
+                    'fecha' => $request->fecha
+                ]);
+
+                // Descontar ingredientes
+                foreach ($receta->ingredientes as $ingrediente) {
+
+                    $cantidadNecesaria =
+                        $ingrediente->pivot->cantidad_libras * $request->cantidad;
+
+                    $ingrediente->decrement(
+                        'stock_libras',
+                        $cantidadNecesaria
+                    );
+                }
+
+                // Aumentar stock del producto
+                $producto = Producto::where('receta_id', $receta->id)->first();
+
+                if ($producto) {
+                    $producto->increment('stock', $request->cantidad);
+                }
+
+                return $produccion;
+            });
+
             return response()->json([
                 'message' => 'Producción registrada correctamente',
                 'produccion' => $produccion
             ]);
-        });
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 400);
+        }
     }
 }
