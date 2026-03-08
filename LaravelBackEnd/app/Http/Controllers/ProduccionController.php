@@ -182,12 +182,27 @@ class ProduccionController extends Controller
                 }
 
                 // Aumentar stock del producto
+                /*
                 $producto = Producto::where('receta_id', $receta->id)->first();
 
                 if ($producto) {
                     $producto->increment('stock', $request->cantidad);
                 }
+                */
+                // Buscar producto o crearlo automáticamente
+                $producto = Producto::firstOrCreate(
+                    ['receta_id' => $receta->id], // condición de búsqueda
+                    [
+                        'nombre' => $receta->nombre,
+                        'descripcion' => 'Producto generado automáticamente desde producción',
+                        'precio' => 0,
+                        'stock' => 0
+                    ]
+                );
 
+                // Aumentar stock del producto
+                $producto->increment('stock', $request->cantidad);
+                
                 return $produccion;
             });
 
