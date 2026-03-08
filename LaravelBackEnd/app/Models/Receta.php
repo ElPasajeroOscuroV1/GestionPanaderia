@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Ingrediente;
 
 class Receta extends Model
 {
@@ -26,7 +27,9 @@ class Receta extends Model
     {
         return $this->belongsToMany(
             Ingrediente::class,
-            'receta_ingrediente'
+            'receta_ingrediente',
+            'receta_id',
+            'ingrediente_id'
         )->withPivot('cantidad_libras');
     }
 }

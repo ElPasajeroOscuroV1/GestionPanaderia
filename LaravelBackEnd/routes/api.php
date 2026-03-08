@@ -10,7 +10,7 @@ Route::get('/dashboard', [DashboardController::class, 'index']);
 Route::apiResource('ingredientes', IngredienteController::class);
 Route::post('/producciones', [ProduccionController::class, 'store']);
 Route::get('/recetas', [RecetaController::class, 'index']);
-
+Route::post('/recetas', [RecetaController::class, 'store']);
 
 
 
