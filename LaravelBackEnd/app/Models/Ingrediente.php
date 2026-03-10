@@ -10,11 +10,29 @@ class Ingrediente extends Model
 {
     use HasFactory;
 
+    public const UNIDADES_MEDIDA = [
+        'unidad',
+        'gramo',
+        'kilo',
+        'libra',
+        'mililitro',
+        'litro',
+        'docena',
+        'paquete',
+    ];
+
     protected $table = 'ingredientes';
 
     protected $fillable = [
         'nombre',
-        'stock_libras'
+        'unidad_medida',
+        'stock_libras',
+        'stock_minimo',
+    ];
+
+    protected $casts = [
+        'stock_libras' => 'float',
+        'stock_minimo' => 'float',
     ];
 
     //

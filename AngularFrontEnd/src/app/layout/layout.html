@@ -1,25 +1,35 @@
-<div class="container">
-
+<div class="app-shell">
   <aside class="sidebar">
+    <div class="brand">
+      <p class="kicker">Panaderia</p>
+      <h1>Inventario</h1>
+      <p class="sub">Controla consumo por receta y stock en tiempo real.</p>
+      <div class="session-box">
+        <span>{{ currentUser?.name || 'Usuario' }}</span>
+        <button type="button" (click)="logout()">Salir</button>
+      </div>
+    </div>
 
-    <h2>Panadería</h2>
-
-    <nav>
-
-      <a routerLink="/dashboard">Dashboard</a>
-
-      <a routerLink="/inventario">Inventario</a>
-
-      <a routerLink="/produccion">Producción</a>
-
+    <nav class="menu">
+      <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/inventario" routerLinkActive="active">Inventario</a>
+      <a routerLink="/compras" routerLinkActive="active">Compras</a>
+      <a routerLink="/recetas" routerLinkActive="active">Recetas</a>
+      <a routerLink="/produccion" routerLinkActive="active">Produccion</a>
     </nav>
 
+    <div class="legend">
+      <p>Flujo recomendado:</p>
+      <ol>
+        <li>Registra ingredientes</li>
+        <li>Registra compras</li>
+        <li>Define recetas</li>
+        <li>Registra produccion</li>
+      </ol>
+    </div>
   </aside>
 
   <main class="content">
-
     <router-outlet></router-outlet>
-
   </main>
-
 </div>

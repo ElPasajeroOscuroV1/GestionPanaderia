@@ -1,0 +1,27 @@
+﻿<div class="login-shell">
+  <section class="login-card">
+    <h1>Ingreso al sistema</h1>
+    <p>Accede con tu usuario y contraseña para gestionar inventario y producción.</p>
+
+    <label>
+      Usuario (email o nombre)
+      <input type="text" [(ngModel)]="usuario" placeholder="admin@panaderia.com" />
+    </label>
+
+    <label>
+      Contraseña
+      <input type="password" [(ngModel)]="password" placeholder="Tu contraseña" />
+    </label>
+
+    <button type="button" [disabled]="loading" (click)="submit()">
+      {{ loading ? 'Ingresando...' : 'Iniciar sesión' }}
+    </button>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+
+    <div class="hint">
+      <strong>Cuenta Admin:</strong>
+      <span>admin@panaderia.com / Admin12345</span>
+    </div>
+  </section>
+</div>

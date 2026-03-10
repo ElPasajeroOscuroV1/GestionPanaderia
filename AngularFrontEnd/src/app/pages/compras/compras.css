@@ -1,4 +1,4 @@
-.page-head {
+﻿.page-head {
   margin-bottom: 1rem;
 }
 
@@ -38,11 +38,16 @@ label {
   color: #4a3b2f;
 }
 
+.obs {
+  margin-top: 0.8rem;
+}
+
 input,
 select {
   border: 1px solid #d5c6af;
   border-radius: 10px;
   padding: 0.55rem 0.65rem;
+  background: #fff;
 }
 
 input:focus,
@@ -53,8 +58,6 @@ select:focus {
 
 .actions {
   margin-top: 0.9rem;
-  display: flex;
-  gap: 0.6rem;
 }
 
 button {
@@ -67,44 +70,9 @@ button {
   cursor: pointer;
 }
 
-button.ghost {
-  background: #e8dcc8;
-  color: #4f3f2f;
-}
-
 button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
-}
-
-.summary {
-  margin-top: 0;
-}
-
-.summary .ok {
-  color: #1d7a45;
-  font-weight: 800;
-}
-
-.summary .err {
-  color: #a22f2f;
-  font-weight: 800;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  text-align: left;
-  padding: 0.55rem;
-  border-bottom: 1px solid #ecdfce;
-}
-
-.insuficiente {
-  background: rgba(174, 42, 42, 0.12);
 }
 
 .msg {
@@ -124,13 +92,20 @@ td {
   margin: 0;
 }
 
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.55rem;
+  border-bottom: 1px solid #ecdfce;
+}
+
 @media (max-width: 900px) {
   .form-grid {
     grid-template-columns: 1fr;
-  }
-
-  .actions {
-    flex-direction: column;
-    align-items: stretch;
   }
 }

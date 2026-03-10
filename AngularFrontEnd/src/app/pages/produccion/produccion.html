@@ -1,19 +1,104 @@
-<h2>Registrar Producción</h2>
+<section class="page-head">
+  <div>
+    <h1>Produccion</h1>
+    <p>Calcula consumo de ingredientes antes de registrar cada lote.</p>
+  </div>
+</section>
 
-<label>Receta</label>
+<section class="panel form-panel">
+  <h2>Registrar produccion</h2>
 
-<select [(ngModel)]="receta_id">
-  <option *ngFor="let r of recetas" [value]="r.id">
-    {{r.nombre}}
-  </option>
-</select>
+  <div class="form-grid">
+    <label>
+      Receta
+      <select [(ngModel)]="receta_id" (ngModelChange)="onRecetaChange()">
+        <option [ngValue]="null">Selecciona receta</option>
+        <option *ngFor="let receta of recetas" [ngValue]="receta.id">
+          {{ receta.nombre }}
+        </option>
+      </select>
+    </label>
 
-<br><br>
+    <label>
+      Cantidad a producir
+      <input type="number" min="1" step="1" [(ngModel)]="cantidad" (ngModelChange)="onCantidadChange()" />
+    </label>
+  </div>
 
-<label>Cantidad</label>
+  <div class="actions">
+    <button type="button" class="ghost" [disabled]="previewLoading" (click)="onCantidadChange()">
+      {{ previewLoading ? 'Calculando...' : 'Previsualizar consumo' }}
+    </button>
 
-<input type="number" [(ngModel)]="cantidad">
+    <button
+      type="button"
+      [disabled]="saving || !preview?.can_produce"
+      (click)="producir()"
+      title="Solo se habilita cuando hay stock suficiente"
+    >
+      {{ saving ? 'Registrando...' : 'Registrar produccion' }}
+    </button>
+  </div>
 
-<br><br>
+  <p class="msg ok" *ngIf="message">{{ message }}</p>
+  <p class="msg err" *ngIf="error">{{ error }}</p>
+</section>
 
-<button (click)="producir()">Producir</button>
+<section class="panel" *ngIf="preview">
+  <h2>Consumo estimado</h2>
+  <p class="summary">
+    Receta: <strong>{{ preview.receta }}</strong>
+    | Cantidad: <strong>{{ preview.cantidad }}</strong>
+    | Estado:
+    <span [class.ok]="preview.can_produce" [class.err]="!preview.can_produce">
+      {{ preview.can_produce ? 'Stock suficiente' : 'Stock insuficiente' }}
+    </span>
+  </p>
+
+  <p class="msg err" *ngIf="preview.message">{{ preview.message }}</p>
+
+  <table *ngIf="preview.consumo.length > 0">
+    <thead>
+      <tr>
+        <th>Ingrediente</th>
+        <th>Unidad</th>
+        <th>Stock actual</th>
+        <th>Necesario</th>
+        <th>Restante</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of preview.consumo" [class.insuficiente]="item.insuficiente">
+        <td>{{ item.ingrediente }}</td>
+        <td>{{ item.unidad_medida }}</td>
+        <td>{{ item.stock_actual }} {{ item.unidad_medida }}</td>
+        <td>{{ item.cantidad_necesaria }} {{ item.unidad_medida }}</td>
+        <td>{{ item.stock_restante }} {{ item.unidad_medida }}</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Historial de produccion</h2>
+
+  <p class="empty" *ngIf="loading">Cargando...</p>
+  <p class="empty" *ngIf="!loading && producciones.length === 0">Aun no hay producciones registradas.</p>
+
+  <table *ngIf="producciones.length > 0">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Receta</th>
+        <th>Cantidad</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of producciones">
+        <td>{{ item.fecha }}</td>
+        <td>{{ item.receta?.nombre || '-' }}</td>
+        <td>{{ item.cantidad }}</td>
+      </tr>
+    </tbody>
+  </table>
+</section>

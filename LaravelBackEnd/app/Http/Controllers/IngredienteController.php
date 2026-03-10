@@ -3,75 +3,75 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ingrediente;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class IngredienteController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): JsonResponse
     {
-        //
-        return Ingrediente::all();
+        $ingredientes = Ingrediente::query()
+            ->orderBy('nombre')
+            ->get();
 
+        return response()->json($ingredientes);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function store(Request $request): JsonResponse
     {
-        //
-    }
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:120', 'unique:ingredientes,nombre'],
+            'unidad_medida' => ['required', Rule::in(Ingrediente::UNIDADES_MEDIDA)],
+            'stock_libras' => ['required', 'numeric', 'min:0'],
+            'stock_minimo' => ['nullable', 'numeric', 'min:0'],
+        ]);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-        $ingrediente = Ingrediente::create($request->all());
+        $payload = $validated;
+        $payload['stock_minimo'] = isset($validated['stock_minimo'])
+            ? (float) $validated['stock_minimo']
+            : 10;
+
+        $ingrediente = Ingrediente::create($payload);
+
         return response()->json($ingrediente, 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Ingrediente $ingrediente)
+    public function show(Ingrediente $ingrediente): JsonResponse
     {
-        //
-        return Ingrediente::findOrFail($id);
+        return response()->json($ingrediente);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Ingrediente $ingrediente)
+    public function update(Request $request, Ingrediente $ingrediente): JsonResponse
     {
-        //
-    }
+        $validated = $request->validate([
+            'nombre' => [
+                'required',
+                'string',
+                'max:120',
+                Rule::unique('ingredientes', 'nombre')->ignore($ingrediente->id),
+            ],
+            'unidad_medida' => ['required', Rule::in(Ingrediente::UNIDADES_MEDIDA)],
+            'stock_libras' => ['required', 'numeric', 'min:0'],
+            'stock_minimo' => ['nullable', 'numeric', 'min:0'],
+        ]);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Ingrediente $ingrediente)
-    {
-        //
-        $ingrediente->update($request->all());
+        $payload = $validated;
+        if (!array_key_exists('stock_minimo', $payload)) {
+            $payload['stock_minimo'] = $ingrediente->stock_minimo;
+        }
+
+        $ingrediente->update($payload);
 
         return response()->json($ingrediente);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Ingrediente $ingrediente)
+    public function destroy(Ingrediente $ingrediente): JsonResponse
     {
         $ingrediente->delete();
 
         return response()->json([
-            "message" => "Ingrediente eliminado correctamente"
+            'message' => 'Ingrediente eliminado correctamente',
         ]);
     }
 }
