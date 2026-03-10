@@ -4,20 +4,35 @@ import { Layout } from './layout/layout';
 import { Dashboard } from './pages/dashboard/dashboard';
 import { InventarioComponent } from './pages/inventario/inventario';
 import { ProduccionComponent } from './pages/produccion/produccion';
+import { RecetasComponent } from './pages/recetas/recetas';
+import { ComprasComponent } from './pages/compras/compras';
+import { LoginComponent } from './pages/login/login';
+import { authGuard, guestGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
+  {
+    path: 'login',
+    component: LoginComponent,
+    canActivate: [guestGuard],
+  },
 
   {
-    path:'',
+    path: '',
     component: Layout,
-    children:[
-      { path:'dashboard', component: Dashboard },
-      { path:'inventario', component: InventarioComponent },
-      { path:'produccion', component: ProduccionComponent },
+    canActivate: [authGuard],
+    children: [
+      { path: 'dashboard', component: Dashboard },
+      { path: 'inventario', component: InventarioComponent },
+      { path: 'compras', component: ComprasComponent },
+      { path: 'recetas', component: RecetasComponent },
+      { path: 'produccion', component: ProduccionComponent },
 
-      { path:'', redirectTo:'dashboard', pathMatch:'full' }
-
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
-  }
+  },
 
+  {
+    path: '**',
+    redirectTo: '',
+  }
 ];

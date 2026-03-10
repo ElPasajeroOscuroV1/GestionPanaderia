@@ -1,24 +1,36 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CompraIngredienteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IngredienteController;
-use App\Http\Controllers\RecetaController;
 use App\Http\Controllers\ProduccionController;
 use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\RecetaController;
 use App\Http\Controllers\VentaController;
+use Illuminate\Support\Facades\Route;
 
-Route::get('/dashboard', [DashboardController::class, 'index']);
-Route::apiResource('ingredientes', IngredienteController::class);
-Route::get('/recetas', [RecetaController::class, 'index']);
-Route::post('/recetas', [RecetaController::class, 'store']);
-Route::get('/producciones', [ProduccionController::class, 'index']);
-Route::post('/producciones', [ProduccionController::class, 'store']);
-Route::get('/productos', [ProductoController::class, 'index']);
-Route::post('/productos', [ProductoController::class, 'store']);
-Route::get('/ventas', [VentaController::class, 'index']);
-Route::post('/ventas', [VentaController::class, 'store']);
+Route::post('/auth/login', [AuthController::class, 'login']);
 
+Route::middleware('api.token')->group(function (): void {
+    Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
 
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
+    Route::apiResource('ingredientes', IngredienteController::class);
+    Route::apiResource('recetas', RecetaController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
 
+    Route::get('/compras-ingredientes', [CompraIngredienteController::class, 'index']);
+    Route::post('/compras-ingredientes', [CompraIngredienteController::class, 'store']);
+
+    Route::get('/producciones', [ProduccionController::class, 'index']);
+    Route::get('/producciones/preview', [ProduccionController::class, 'preview']);
+    Route::post('/producciones', [ProduccionController::class, 'store']);
+
+    Route::get('/productos', [ProductoController::class, 'index']);
+    Route::post('/productos', [ProductoController::class, 'store']);
+
+    Route::get('/ventas', [VentaController::class, 'index']);
+    Route::post('/ventas', [VentaController::class, 'store']);
+});

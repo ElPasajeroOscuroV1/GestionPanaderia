@@ -1,20 +1,86 @@
-<h1>Dashboard</h1>
-
-<div class="cards">
-
-  <div class="card">
-    <h3>Producción Hoy</h3>
-    <p>{{data.produccion_hoy}}</p>
+<section class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p>Vision general del inventario y la produccion del dia.</p>
   </div>
 
-  <div class="card">
-    <h3>Ingredientes</h3>
-    <p>{{data.ingredientes}}</p>
-  </div>
+  <button type="button" (click)="loadDashboard()">Actualizar</button>
+</section>
 
-  <div class="card">
-    <h3>Recetas</h3>
-    <p>{{data.recetas}}</p>
-  </div>
+<p class="state" *ngIf="loading">Cargando datos...</p>
+<p class="state err" *ngIf="error">{{ error }}</p>
 
-</div>
+<section class="cards" *ngIf="!loading">
+  <article class="card">
+    <h3>Produccion hoy</h3>
+    <p>{{ data.produccion_hoy }}</p>
+  </article>
+
+  <article class="card">
+    <h3>Ingredientes activos</h3>
+    <p>{{ data.ingredientes }}</p>
+  </article>
+
+  <article class="card">
+    <h3>Recetas registradas</h3>
+    <p>{{ data.recetas }}</p>
+  </article>
+
+  <article class="card">
+    <h3>Alertas bajo stock</h3>
+    <p>{{ data.ingredientes_bajo_stock_total }}</p>
+  </article>
+
+  <article class="card">
+    <h3>Productos en stock</h3>
+    <p>{{ data.productos_en_stock }}</p>
+  </article>
+</section>
+
+<section class="grid-two" *ngIf="!loading">
+  <article class="panel">
+    <h2>Ingredientes con bajo stock</h2>
+    <p class="empty" *ngIf="data.ingredientes_bajo_stock.length === 0">No hay alertas por ahora.</p>
+
+    <table *ngIf="data.ingredientes_bajo_stock.length > 0">
+      <thead>
+        <tr>
+          <th>Ingrediente</th>
+          <th>Unidad</th>
+          <th>Stock</th>
+          <th>Limite minimo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of data.ingredientes_bajo_stock">
+          <td>{{ item.nombre }}</td>
+          <td>{{ item.unidad_medida }}</td>
+          <td>{{ item.stock_libras }} {{ item.unidad_medida }}</td>
+          <td>{{ item.stock_minimo }} {{ item.unidad_medida }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </article>
+
+  <article class="panel">
+    <h2>Producciones recientes</h2>
+    <p class="empty" *ngIf="data.producciones_recientes.length === 0">Aun no hay producciones.</p>
+
+    <table *ngIf="data.producciones_recientes.length > 0">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Receta</th>
+          <th>Cantidad</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of data.producciones_recientes">
+          <td>{{ item.fecha }}</td>
+          <td>{{ item.receta?.nombre || 'Sin receta' }}</td>
+          <td>{{ item.cantidad }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </article>
+</section>

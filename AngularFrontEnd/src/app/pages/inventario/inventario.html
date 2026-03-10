@@ -1,14 +1,120 @@
-<h2>Inventario</h2>
+<section class="page-head">
+  <div>
+    <h1>Inventario de ingredientes</h1>
+    <p>Gestiona stock y manten los insumos actualizados.</p>
+  </div>
+</section>
 
-<table border="1">
-  <tr>
-    <th>Ingrediente</th>
-    <th>Stock (libras)</th>
-  </tr>
+<section class="panel form-panel">
+  <h2>Nuevo ingrediente</h2>
+  <div class="form-grid">
+    <label>
+      Nombre
+      <input type="text" [(ngModel)]="nuevoNombre" placeholder="Ejemplo: Harina" />
+    </label>
 
-  <tr *ngFor="let i of ingredientes">
-    <td>{{i.nombre}}</td>
-    <td>{{i.stock_libras}}</td>
-  </tr>
+    <label>
+      Unidad de medida
+      <select [(ngModel)]="nuevaUnidadMedida">
+        <option *ngFor="let unidad of unidadesMedida" [ngValue]="unidad">
+          {{ unidadLabel(unidad) }}
+        </option>
+      </select>
+    </label>
 
-</table>
+    <label>
+      Stock inicial
+      <input type="number" min="0" step="0.01" [(ngModel)]="nuevoStock" />
+    </label>
+
+    <label>
+      Stock minimo
+      <input type="number" min="0" step="0.01" [(ngModel)]="nuevoStockMinimo" />
+    </label>
+  </div>
+
+  <div class="actions">
+    <button type="button" [disabled]="saving" (click)="createIngrediente()">
+      {{ saving ? 'Guardando...' : 'Agregar ingrediente' }}
+    </button>
+  </div>
+
+  <p class="msg ok" *ngIf="message">{{ message }}</p>
+  <p class="msg err" *ngIf="error">{{ error }}</p>
+</section>
+
+<section class="panel">
+  <div class="alerts" *ngIf="ingredientesAgotados.length > 0 || ingredientesBajoStock.length > 0">
+    <p class="alert critical" *ngIf="ingredientesAgotados.length > 0">
+      Agotados: {{ ingredientesAgotados.length }}
+    </p>
+    <p class="alert warning" *ngIf="ingredientesBajoStock.length > 0">
+      Bajo stock: {{ ingredientesBajoStock.length }}
+    </p>
+  </div>
+  <p class="alert-detail critical" *ngIf="ingredientesAgotados.length > 0">
+    Faltantes: {{ nombresIngredientesAgotados }}
+  </p>
+  <p class="alert-detail warning" *ngIf="ingredientesBajoStock.length > 0">
+    Revisar pronto: {{ nombresIngredientesBajoStock }}
+  </p>
+
+  <div class="table-head">
+    <h2>Stock actual</h2>
+    <input type="text" [(ngModel)]="search" placeholder="Buscar ingrediente..." />
+  </div>
+
+  <p class="empty" *ngIf="loading">Cargando inventario...</p>
+  <p class="empty" *ngIf="!loading && ingredientesFiltrados.length === 0">No hay ingredientes registrados.</p>
+
+  <table *ngIf="ingredientesFiltrados.length > 0">
+    <thead>
+      <tr>
+        <th>Ingrediente</th>
+        <th>Unidad</th>
+        <th>Stock disponible</th>
+        <th>Equiv. libras</th>
+        <th>Stock minimo</th>
+        <th>Estado</th>
+        <th>Guardar</th>
+        <th>Eliminar</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let ingrediente of ingredientesFiltrados">
+        <td>
+          <input type="text" [(ngModel)]="editable[ingrediente.id].nombre" />
+        </td>
+        <td>
+          <select [(ngModel)]="editable[ingrediente.id].unidad_medida">
+            <option *ngFor="let unidad of unidadesMedida" [ngValue]="unidad">
+              {{ unidadLabel(unidad) }}
+            </option>
+          </select>
+        </td>
+        <td>
+          <input type="number" min="0" step="0.01" [(ngModel)]="editable[ingrediente.id].stock_libras" />
+          <small>{{ editable[ingrediente.id].unidad_medida }}</small>
+        </td>
+        <td>
+          <strong>{{ equivalenteLibras(ingrediente.id) }}</strong>
+        </td>
+        <td>
+          <input type="number" min="0" step="0.01" [(ngModel)]="editable[ingrediente.id].stock_minimo" />
+          <small>{{ editable[ingrediente.id].unidad_medida }}</small>
+        </td>
+        <td>
+          <span class="status critical" *ngIf="isAgotado(ingrediente.id)">Agotado</span>
+          <span class="status warning" *ngIf="isBajoStock(ingrediente.id)">Bajo</span>
+          <span class="status ok" *ngIf="isStockNormal(ingrediente.id)">Normal</span>
+        </td>
+        <td>
+          <button type="button" class="ghost" (click)="updateIngrediente(ingrediente.id)">Guardar</button>
+        </td>
+        <td>
+          <button type="button" class="danger" (click)="deleteIngrediente(ingrediente)">Eliminar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</section>

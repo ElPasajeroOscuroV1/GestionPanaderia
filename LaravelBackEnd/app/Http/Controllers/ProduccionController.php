@@ -2,194 +2,120 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Ingrediente;
 use App\Models\Produccion;
-use App\Models\Receta;
-use Illuminate\Support\Facades\DB;
 use App\Models\Producto;
+use App\Models\Receta;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProduccionController extends Controller
 {
-    //
-    public function index()
+    public function index(): JsonResponse
     {
-        $producciones = Produccion::with('receta')->get();
+        $producciones = Produccion::query()
+            ->with('receta:id,nombre')
+            ->orderByDesc('fecha')
+            ->orderByDesc('id')
+            ->get();
 
         return response()->json($producciones);
     }
-    /*
-    public function store(Request $request)
+
+    public function preview(Request $request): JsonResponse
     {
-        $request->validate([
-            'receta_id' => 'required|exists:recetas,id',
-            'cantidad' => 'required|numeric|min:1',
-            'fecha' => 'required|date'
+        $validated = $request->validate([
+            'receta_id' => ['required', 'exists:recetas,id'],
+            'cantidad' => ['required', 'integer', 'min:1'],
         ]);
 
-        $receta = Receta::with('ingredientes')->findOrFail($request->receta_id);
+        $receta = Receta::query()
+            ->with('ingredientes:id,nombre,unidad_medida,stock_libras')
+            ->findOrFail((int) $validated['receta_id']);
 
-        // Verificar inventario antes de producir
-        foreach ($receta->ingredientes as $ingrediente) {
-
-            $cantidadNecesaria =
-                $ingrediente->pivot->cantidad_libras * $request->cantidad;
-
-            if ($ingrediente->stock_libras < $cantidadNecesaria) {
-
-                return response()->json([
-                    'error' => 'Inventario insuficiente para producir',
-                    'ingrediente' => $ingrediente->nombre,
-                    'stock_actual' => $ingrediente->stock_libras,
-                    'necesario' => $cantidadNecesaria
-                ], 400);
-            }
+        if ($receta->ingredientes->isEmpty()) {
+            return response()->json([
+                'can_produce' => false,
+                'message' => 'La receta no tiene ingredientes configurados.',
+                'consumo' => [],
+            ], 422);
         }
 
-        // Crear producción
-        $produccion = Produccion::create([
-            'receta_id' => $receta->id,
-            'cantidad' => $request->cantidad,
-            'fecha' => now()
-        ]);
-
-        // Descontar ingredientes
-        foreach ($receta->ingredientes as $ingrediente) {
-
-            $cantidadNecesaria =
-                $ingrediente->pivot->cantidad_libras * $request->cantidad;
-
-            $ingrediente->stock_libras -= $cantidadNecesaria;
-
-            $ingrediente->save();
-        }
+        $analysis = $this->buildConsumptionAnalysis($receta, (int) $validated['cantidad']);
 
         return response()->json([
-            'message' => 'Producción registrada',
-            'produccion' => $produccion
+            'receta_id' => $receta->id,
+            'receta' => $receta->nombre,
+            'cantidad' => (int) $validated['cantidad'],
+            'can_produce' => $analysis['can_produce'],
+            'consumo' => $analysis['consumo'],
         ]);
     }
-    */
-    /*
-    public function store(Request $request)
+
+    public function store(Request $request): JsonResponse
     {
-        $request->validate([
-            'receta_id' => 'required|exists:recetas,id',
-            'cantidad' => 'required|numeric|min:1',
-            'fecha' => 'required|date'
-        ]);
-
-        return DB::transaction(function () use ($request) {
-
-            $receta = Receta::with('ingredientes')
-                ->findOrFail($request->receta_id);
-
-            // Verificar inventario
-            foreach ($receta->ingredientes as $ingrediente) {
-
-                $cantidadNecesaria =
-                    $ingrediente->pivot->cantidad_libras * $request->cantidad;
-
-                if ($ingrediente->stock_libras < $cantidadNecesaria) {
-
-                    return response()->json([
-                        'error' => 'Inventario insuficiente',
-                        'ingrediente' => $ingrediente->nombre,
-                        'stock_actual' => $ingrediente->stock_libras,
-                        'necesario' => $cantidadNecesaria
-                    ], 400);
-                }
-            }
-
-            // Crear producción
-            $produccion = Produccion::create([
-                'receta_id' => $receta->id,
-                'cantidad' => $request->cantidad,
-                'fecha' => $request->fecha
-            ]);
-
-            // Descontar ingredientes
-            foreach ($receta->ingredientes as $ingrediente) {
-
-                $cantidadNecesaria =
-                    $ingrediente->pivot->cantidad_libras * $request->cantidad;
-
-                $ingrediente->decrement(
-                    'stock_libras',
-                    $cantidadNecesaria
-                );
-            }
-
-            // Buscar producto asociado a la receta
-            $producto = Producto::where('receta_id', $receta->id)->first();
-
-            if ($producto) {
-                $producto->increment('stock', $request->cantidad);
-            }
-
-            throw new \Exception(
-                'Inventario insuficiente para el ingrediente: ' . $ingrediente->nombre
-            );
-        });
-    }
-    */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'receta_id' => 'required|exists:recetas,id',
-            'cantidad' => 'required|numeric|min:1',
-            'fecha' => 'required|date'
+        $validated = $request->validate([
+            'receta_id' => ['required', 'exists:recetas,id'],
+            'cantidad' => ['required', 'integer', 'min:1'],
+            'fecha' => ['nullable', 'date'],
         ]);
 
         try {
+            $result = DB::transaction(function () use ($validated): array {
+                $cantidad = (int) $validated['cantidad'];
 
-            $produccion = DB::transaction(function () use ($request) {
+                $receta = Receta::query()
+                    ->with('ingredientes:id,nombre,unidad_medida,stock_libras')
+                    ->findOrFail((int) $validated['receta_id']);
 
-                $receta = Receta::with('ingredientes')
-                    ->findOrFail($request->receta_id);
-
-                // Verificar inventario
-                foreach ($receta->ingredientes as $ingrediente) {
-
-                    $cantidadNecesaria =
-                        $ingrediente->pivot->cantidad_libras * $request->cantidad;
-
-                    if ($ingrediente->stock_libras < $cantidadNecesaria) {
-
-                        throw new \Exception(
-                            'Inventario insuficiente para ' . $ingrediente->nombre
-                        );
-                    }
+                if ($receta->ingredientes->isEmpty()) {
+                    throw new \RuntimeException('La receta seleccionada no tiene ingredientes.');
                 }
 
-                // Crear producción
+                $ingredienteIds = $receta->ingredientes->pluck('id')->all();
+
+                $ingredientesConLock = Ingrediente::query()
+                    ->whereIn('id', $ingredienteIds)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id');
+
+                $analysis = $this->buildConsumptionAnalysis($receta, $cantidad, $ingredientesConLock);
+
+                if (!$analysis['can_produce']) {
+                    $faltantes = collect($analysis['consumo'])
+                        ->where('insuficiente', true)
+                        ->map(function (array $item): string {
+                            $faltante = round(abs((float) $item['stock_restante']), 2);
+
+                            return sprintf(
+                                '%s (faltan %s %s)',
+                                $item['ingrediente'],
+                                $faltante,
+                                $item['unidad_medida']
+                            );
+                        })
+                        ->values()
+                        ->implode(', ');
+
+                    throw new \RuntimeException('Inventario insuficiente para: ' . $faltantes);
+                }
+
                 $produccion = Produccion::create([
                     'receta_id' => $receta->id,
-                    'cantidad' => $request->cantidad,
-                    'fecha' => $request->fecha
+                    'cantidad' => $cantidad,
+                    'fecha' => $validated['fecha'] ?? now()->toDateString(),
                 ]);
 
-                // Descontar ingredientes
-                foreach ($receta->ingredientes as $ingrediente) {
-
-                    $cantidadNecesaria =
-                        $ingrediente->pivot->cantidad_libras * $request->cantidad;
-
-                    $ingrediente->decrement(
-                        'stock_libras',
-                        $cantidadNecesaria
-                    );
+                foreach ($analysis['consumo'] as $item) {
+                    Ingrediente::query()
+                        ->where('id', $item['ingrediente_id'])
+                        ->decrement('stock_libras', $item['cantidad_necesaria']);
                 }
 
-                // Aumentar stock del producto
-                /*
-                $producto = Producto::where('receta_id', $receta->id)->first();
-
-                if ($producto) {
-                    $producto->increment('stock', $request->cantidad);
-                }
-                */
-                // Buscar producto o crearlo automáticamente
-                $producto = Producto::where('receta_id', $receta->id)
+                $producto = Producto::query()
+                    ->where('receta_id', $receta->id)
                     ->lockForUpdate()
                     ->orderByDesc('precio')
                     ->orderByDesc('id')
@@ -201,26 +127,67 @@ class ProduccionController extends Controller
                         'nombre' => $receta->nombre,
                         'descripcion' => 'Producto generado automaticamente desde produccion',
                         'precio' => 0,
-                        'stock' => 0
+                        'stock' => 0,
                     ]);
                 }
 
-                // Aumentar stock del producto
-                $producto->increment('stock', $request->cantidad);
-                
-                return $produccion;
+                $producto->increment('stock', $cantidad);
+
+                return [
+                    'produccion' => $produccion->load('receta:id,nombre'),
+                    'consumo' => $analysis['consumo'],
+                ];
             });
 
             return response()->json([
-                'message' => 'Producción registrada correctamente',
-                'produccion' => $produccion
-            ]);
-
-        } catch (\Exception $e) {
-
+                'message' => 'Produccion registrada correctamente',
+                'produccion' => $result['produccion'],
+                'consumo' => $result['consumo'],
+            ], 201);
+        } catch (\RuntimeException $exception) {
             return response()->json([
-                'error' => $e->getMessage()
-            ], 400);
+                'error' => $exception->getMessage(),
+            ], 422);
         }
+    }
+
+    /**
+     * @param \Illuminate\Support\Collection<int, Ingrediente>|null $lockedIngredientes
+     * @return array<string, mixed>
+     */
+    private function buildConsumptionAnalysis(Receta $receta, int $cantidad, $lockedIngredientes = null): array
+    {
+        $canProduce = true;
+
+        $consumo = $receta->ingredientes
+            ->map(function (Ingrediente $ingrediente) use ($cantidad, $lockedIngredientes, &$canProduce): array {
+                $origen = $lockedIngredientes?->get($ingrediente->id) ?? $ingrediente;
+
+                $cantidadNecesaria = round(((float) $ingrediente->pivot->cantidad_libras) * $cantidad, 2);
+                $stockActual = round((float) $origen->stock_libras, 2);
+                $stockRestante = round($stockActual - $cantidadNecesaria, 2);
+                $insuficiente = $stockRestante < 0;
+
+                if ($insuficiente) {
+                    $canProduce = false;
+                }
+
+                return [
+                    'ingrediente_id' => $ingrediente->id,
+                    'ingrediente' => $ingrediente->nombre,
+                    'unidad_medida' => $ingrediente->unidad_medida,
+                    'stock_actual' => $stockActual,
+                    'cantidad_necesaria' => $cantidadNecesaria,
+                    'stock_restante' => $stockRestante,
+                    'insuficiente' => $insuficiente,
+                ];
+            })
+            ->values()
+            ->all();
+
+        return [
+            'can_produce' => $canProduce,
+            'consumo' => $consumo,
+        ];
     }
 }
