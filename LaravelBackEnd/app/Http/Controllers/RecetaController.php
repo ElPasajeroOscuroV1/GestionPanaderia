@@ -64,10 +64,17 @@ class RecetaController extends Controller
         */
         if ($request->has('ingredientes')) {
             foreach ($request->ingredientes as $ingrediente) {
+                /*
                 $receta->ingredientes()->attach(
                     $ingrediente['ingrediente_id'],
                     ['cantidad_libras' => $ingrediente['cantidad_libras']]
                 );
+                */
+                $receta->ingredientes()->syncWithoutDetaching([
+                    $ingrediente['ingrediente_id'] => [
+                        'cantidad_libras' => $ingrediente['cantidad_libras']
+                    ]
+                ]);
             }
         }
 

@@ -22,15 +22,17 @@ class ProductoController extends Controller
             'receta_id' => 'required|exists:recetas,id'
         ]);
 
-        $producto = Producto::create([
-            'nombre' => $request->nombre,
-            'descripcion' => $request->descripcion,
-            'precio' => $request->precio,
-            'receta_id' => $request->receta_id
-        ]);
+        $producto = Producto::updateOrCreate(
+            ['receta_id' => $request->receta_id],
+            [
+                'nombre' => $request->nombre,
+                'descripcion' => $request->descripcion,
+                'precio' => $request->precio
+            ]
+        );
 
         return response()->json([
-            'message' => 'Producto creado',
+            'message' => 'Producto guardado correctamente',
             'producto' => $producto
         ]);
     }

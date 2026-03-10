@@ -11,15 +11,8 @@ class ProduccionObserver
      */
     public function created(Produccion $produccion)
     {
-        $receta = $produccion->receta;
-
-        foreach ($receta->ingredientes as $ingrediente) {
-
-            $cantidadNecesaria = $ingrediente->pivot->cantidad_libras * $produccion->cantidad;
-
-            $ingrediente->stock_libras -= $cantidadNecesaria;
-            $ingrediente->save();
-        }
+        // El descuento de ingredientes se gestiona en ProduccionController@store
+        // dentro de una transaccion para evitar duplicidad de movimientos.
     }
 
     /**

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Produccion;
 use App\Models\Receta;
-use App\Models\Ingrediente;
 use Illuminate\Support\Facades\DB;
 use App\Models\Producto;
 
@@ -190,15 +189,21 @@ class ProduccionController extends Controller
                 }
                 */
                 // Buscar producto o crearlo automáticamente
-                $producto = Producto::firstOrCreate(
-                    ['receta_id' => $receta->id], // condición de búsqueda
-                    [
+                $producto = Producto::where('receta_id', $receta->id)
+                    ->lockForUpdate()
+                    ->orderByDesc('precio')
+                    ->orderByDesc('id')
+                    ->first();
+
+                if (!$producto) {
+                    $producto = Producto::create([
+                        'receta_id' => $receta->id,
                         'nombre' => $receta->nombre,
-                        'descripcion' => 'Producto generado automáticamente desde producción',
+                        'descripcion' => 'Producto generado automaticamente desde produccion',
                         'precio' => 0,
                         'stock' => 0
-                    ]
-                );
+                    ]);
+                }
 
                 // Aumentar stock del producto
                 $producto->increment('stock', $request->cantidad);

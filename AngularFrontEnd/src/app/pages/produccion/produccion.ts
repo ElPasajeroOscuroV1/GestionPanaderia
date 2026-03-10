@@ -10,7 +10,9 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './produccion.html',
   styleUrls: ['./produccion.css']
 })
+
 export class ProduccionComponent implements OnInit {
+  produciendo = false;
 
   recetas:any[] = [];
 
@@ -27,20 +29,49 @@ export class ProduccionComponent implements OnInit {
 
   }
 
+  
+  producir(){
+
+    if(this.produciendo) return;
+
+    this.produciendo = true;
+
+    const data = {
+      receta_id: this.receta_id,
+      cantidad: this.cantidad,
+      fecha: new Date().toISOString().split('T')[0]
+    };
+
+    this.api.registrarProduccion(data).subscribe({
+      next: ()=>{
+        alert("Producción registrada");
+        this.produciendo = false;
+      },
+      error: ()=>{
+        this.produciendo = false;
+      }
+    });
+
+  }
+  /*
   producir(){
 
     const data = {
       receta_id: this.receta_id,
-      cantidad: this.cantidad
+      cantidad: this.cantidad,
+      fecha: new Date().toISOString().split('T')[0]
     };
 
-    this.api.registrarProduccion(data).subscribe(res=>{
-      alert("Producción registrada");
-    },
-    err=>{
-      alert(err.error.error);
+    this.api.registrarProduccion(data).subscribe({
+      next: (res)=>{
+        alert("Producción registrada");
+      },
+      error: (err)=>{
+        alert(err.error.error);
+      }
     });
 
   }
+  */
 
 }

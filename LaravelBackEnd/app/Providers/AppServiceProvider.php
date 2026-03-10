@@ -3,8 +3,6 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Models\Produccion;
-use App\Observers\ProduccionObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +20,5 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         //
-        Produccion::observe(ProduccionObserver::class);
     }
 }
