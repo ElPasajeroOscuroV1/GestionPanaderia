@@ -114,15 +114,22 @@ class ProduccionController extends Controller
                         ->decrement('stock_libras', $item['cantidad_necesaria']);
                 }
 
-                $producto = Producto::firstOrCreate(
-                    ['receta_id' => $receta->id],
-                    [
+                $producto = Producto::query()
+                    ->where('receta_id', $receta->id)
+                    ->lockForUpdate()
+                    ->orderByDesc('precio')
+                    ->orderByDesc('id')
+                    ->first();
+
+                if (!$producto) {
+                    $producto = Producto::create([
+                        'receta_id' => $receta->id,
                         'nombre' => $receta->nombre,
                         'descripcion' => 'Producto generado automaticamente desde produccion',
                         'precio' => 0,
                         'stock' => 0,
-                    ]
-                );
+                    ]);
+                }
 
                 $producto->increment('stock', $cantidad);
 

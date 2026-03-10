@@ -11,6 +11,7 @@ import { ApiService, Produccion, ProduccionPreview, Receta } from '../../service
   templateUrl: './produccion.html',
   styleUrl: './produccion.css',
 })
+
 export class ProduccionComponent implements OnInit {
   recetas: Receta[] = [];
   producciones: Produccion[] = [];
