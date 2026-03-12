@@ -25,11 +25,11 @@ class DatabaseSeeder extends Seeder
         ]);
 
         User::updateOrCreate([
-            'email' => 'test@example.com',
+            'email' => 'panadero@panaderia.com',
         ], [
-            'name' => 'Test User',
-            'password' => Hash::make('password'),
-            'rol' => 'admin',
+            'name' => 'Panadero',
+            'password' => Hash::make('Panadero12345'),
+            'rol' => 'panadero',
         ]);
     }
 }

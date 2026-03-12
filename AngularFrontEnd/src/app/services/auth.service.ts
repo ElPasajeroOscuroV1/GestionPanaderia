@@ -2,10 +2,13 @@
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 
+export type UserRole = 'admin' | 'panadero';
+
 export interface AuthUser {
   id: number;
   name: string;
   email: string;
+  rol: UserRole;
 }
 
 interface LoginResponse {
@@ -27,7 +30,11 @@ export class AuthService {
   private readonly userSubject = new BehaviorSubject<AuthUser | null>(this.readUserFromStorage());
   readonly user$ = this.userSubject.asObservable();
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {
+    if (this.getToken() && !this.userSubject.value) {
+      this.clearSession();
+    }
+  }
 
   login(usuario: string, password: string): Observable<LoginResponse> {
     return this.http
@@ -72,6 +79,10 @@ export class AuthService {
     return this.userSubject.value;
   }
 
+  hasRole(role: UserRole): boolean {
+    return this.userSubject.value?.rol === role;
+  }
+
   private persistSession(token: string, user: AuthUser): void {
     localStorage.setItem(this.tokenKey, token);
     localStorage.setItem(this.userKey, JSON.stringify(user));
@@ -92,7 +103,17 @@ export class AuthService {
     }
 
     try {
-      return JSON.parse(rawUser) as AuthUser;
+      const parsedUser = JSON.parse(rawUser) as Partial<AuthUser>;
+      if (
+        typeof parsedUser?.id !== 'number' ||
+        typeof parsedUser?.name !== 'string' ||
+        typeof parsedUser?.email !== 'string' ||
+        (parsedUser?.rol !== 'admin' && parsedUser?.rol !== 'panadero')
+      ) {
+        return null;
+      }
+
+      return parsedUser as AuthUser;
     } catch {
       return null;
     }

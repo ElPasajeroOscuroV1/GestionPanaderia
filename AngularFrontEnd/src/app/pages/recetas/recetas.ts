@@ -127,25 +127,48 @@ export class RecetasComponent implements OnInit {
       return null;
     }
 
-    const ingredientes = this.ingredientesForm
-      .filter((item) => item.ingrediente_id !== null && (item.cantidad ?? 0) > 0)
-      .map((item) => ({
-        ingrediente_id: item.ingrediente_id as number,
-        cantidad: Number(item.cantidad),
-      }));
+    const ingredientes: RecetaPayload['ingredientes'] = [];
+    const duplicated = new Set<number>();
+    for (const item of this.ingredientesForm) {
+      const tieneIngrediente = item.ingrediente_id !== null;
+      const tieneCantidad = item.cantidad !== null;
+
+      if (!tieneIngrediente && !tieneCantidad) {
+        continue;
+      }
+
+      if (!tieneIngrediente) {
+        this.error = 'Selecciona un ingrediente para cada cantidad ingresada.';
+        return null;
+      }
+
+      if (!tieneCantidad) {
+        this.error = 'Ingresa una cantidad para cada ingrediente.';
+        return null;
+      }
+
+      const cantidad = Number(item.cantidad);
+      if (!Number.isFinite(cantidad) || cantidad <= 0) {
+        this.error = 'La cantidad por ingrediente debe ser mayor a cero.';
+        return null;
+      }
+
+      const ingredienteId = item.ingrediente_id as number;
+      if (duplicated.has(ingredienteId)) {
+        this.error = 'No repitas ingredientes en la misma receta.';
+        return null;
+      }
+      duplicated.add(ingredienteId);
+
+      ingredientes.push({
+        ingrediente_id: ingredienteId,
+        cantidad,
+      });
+    }
 
     if (ingredientes.length === 0) {
       this.error = 'Agrega al menos un ingrediente con cantidad valida.';
       return null;
-    }
-
-    const duplicated = new Set<number>();
-    for (const item of ingredientes) {
-      if (duplicated.has(item.ingrediente_id)) {
-        this.error = 'No repitas ingredientes en la misma receta.';
-        return null;
-      }
-      duplicated.add(item.ingrediente_id);
     }
 
     return {

@@ -98,6 +98,53 @@ export interface ProduccionPreview {
   message?: string;
 }
 
+export type ReporteTipo = 'inventario' | 'recetas' | 'produccion';
+
+export interface ReporteInventarioItem {
+  ingrediente_id: number;
+  nombre_ingrediente: string;
+  stock_actual_libras: number;
+  stock_minimo_libras: number;
+  estado: 'agotado' | 'bajo_stock' | 'normal';
+}
+
+export interface ReporteRecetaItem {
+  receta_id: number;
+  nombre_receta: string;
+  ingrediente_id: number;
+  nombre_ingrediente: string;
+  cantidad_utilizada_libras: number;
+}
+
+export interface ReporteProduccionItem {
+  produccion_id: number;
+  fecha: string;
+  receta_id: number;
+  nombre_receta: string | null;
+  cantidad_producida: number;
+  ingrediente_id: number;
+  nombre_ingrediente: string;
+  cantidad_utilizada_libras: number;
+}
+
+export interface ReporteProduccionIngredienteResumenItem {
+  ingrediente_id: number;
+  nombre_ingrediente: string;
+  cantidad_total_utilizada_libras: number;
+}
+
+export interface ReporteGestionResponse {
+  tipo: ReporteTipo;
+  generated_at: string;
+  filtros: {
+    fecha_inicio?: string;
+    fecha_fin?: string;
+  };
+  resumen: Record<string, number>;
+  items: ReporteInventarioItem[] | ReporteRecetaItem[] | ReporteProduccionItem[];
+  resumen_ingredientes?: ReporteProduccionIngredienteResumenItem[];
+}
+
 export interface RecetaPayload {
   nombre: string;
   descripcion?: string;
@@ -189,5 +236,23 @@ export class ApiService {
       `${this.apiUrl}/compras-ingredientes`,
       payload
     );
+  }
+
+  getReporteGestion(params: {
+    tipo: ReporteTipo;
+    fecha_inicio?: string;
+    fecha_fin?: string;
+  }): Observable<ReporteGestionResponse> {
+    let queryParams = new HttpParams().set('tipo', params.tipo);
+
+    if (params.fecha_inicio) {
+      queryParams = queryParams.set('fecha_inicio', params.fecha_inicio);
+    }
+
+    if (params.fecha_fin) {
+      queryParams = queryParams.set('fecha_fin', params.fecha_fin);
+    }
+
+    return this.http.get<ReporteGestionResponse>(`${this.apiUrl}/reportes`, { params: queryParams });
   }
 }

@@ -3,6 +3,14 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { ApiService, Ingrediente, UnidadMedida } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
+
+interface EditableIngrediente {
+  nombre: string;
+  unidad_medida: UnidadMedida;
+  stock_libras: number;
+  stock_minimo: number;
+}
 
 @Component({
   selector: 'app-inventario',
@@ -31,15 +39,22 @@ export class InventarioComponent implements OnInit {
   nuevoStock = 0;
   nuevoStockMinimo = 10;
 
-  editable: Record<number, { nombre: string; unidad_medida: UnidadMedida; stock_libras: number; stock_minimo: number }> =
-    {};
+  editable: Record<number, EditableIngrediente> = {};
+  editingRows: Record<number, boolean> = {};
 
   loading = false;
   saving = false;
   message = '';
   error = '';
 
-  constructor(private readonly api: ApiService) {}
+  constructor(
+    private readonly api: ApiService,
+    private readonly authService: AuthService
+  ) {}
+
+  get canManageInventario(): boolean {
+    return this.authService.hasRole('admin');
+  }
 
   ngOnInit(): void {
     this.loadIngredientes();
@@ -74,14 +89,19 @@ export class InventarioComponent implements OnInit {
     this.message = '';
     this.error = '';
 
+    if (!this.canManageInventario) {
+      this.error = 'No tienes permisos para crear ingredientes.';
+      return;
+    }
+
     const nombre = this.nuevoNombre.trim();
     if (!nombre) {
       this.error = 'Ingresa un nombre de ingrediente.';
       return;
     }
 
-    if (this.nuevoStock < 0) {
-      this.error = 'El stock no puede ser negativo.';
+    if (this.nuevoStock <= 0) {
+      this.error = 'El stock inicial debe ser mayor a cero.';
       return;
     }
 
@@ -118,6 +138,11 @@ export class InventarioComponent implements OnInit {
     this.message = '';
     this.error = '';
 
+    if (!this.canManageInventario) {
+      this.error = 'No tienes permisos para editar ingredientes.';
+      return;
+    }
+
     const item = this.editable[ingredienteId];
     if (!item) {
       return;
@@ -129,8 +154,8 @@ export class InventarioComponent implements OnInit {
       return;
     }
 
-    if (item.stock_libras < 0) {
-      this.error = 'El stock no puede ser negativo.';
+    if (item.stock_libras <= 0) {
+      this.error = 'El stock debe ser mayor a cero.';
       return;
     }
 
@@ -149,6 +174,7 @@ export class InventarioComponent implements OnInit {
       .subscribe({
         next: () => {
           this.message = 'Ingrediente actualizado.';
+          delete this.editingRows[ingredienteId];
           this.loadIngredientes();
         },
         error: (err) => {
@@ -157,9 +183,36 @@ export class InventarioComponent implements OnInit {
       });
   }
 
+  startEdit(ingrediente: Ingrediente): void {
+    if (!this.canManageInventario) {
+      return;
+    }
+
+    this.message = '';
+    this.error = '';
+    this.editable[ingrediente.id] = this.toEditable(ingrediente);
+    this.editingRows[ingrediente.id] = true;
+  }
+
+  cancelEdit(ingrediente: Ingrediente): void {
+    this.message = '';
+    this.error = '';
+    this.editable[ingrediente.id] = this.toEditable(ingrediente);
+    delete this.editingRows[ingrediente.id];
+  }
+
+  isEditing(ingredienteId: number): boolean {
+    return !!this.editingRows[ingredienteId];
+  }
+
   deleteIngrediente(ingrediente: Ingrediente): void {
     this.message = '';
     this.error = '';
+
+    if (!this.canManageInventario) {
+      this.error = 'No tienes permisos para eliminar ingredientes.';
+      return;
+    }
 
     const confirmDelete = confirm(`Eliminar ingrediente ${ingrediente.nombre}?`);
     if (!confirmDelete) {
@@ -188,13 +241,9 @@ export class InventarioComponent implements OnInit {
         next: (ingredientes) => {
           this.ingredientes = ingredientes;
           this.editable = {};
+          this.editingRows = {};
           for (const ingrediente of ingredientes) {
-            this.editable[ingrediente.id] = {
-              nombre: ingrediente.nombre,
-              unidad_medida: ingrediente.unidad_medida,
-              stock_libras: ingrediente.stock_libras,
-              stock_minimo: ingrediente.stock_minimo,
-            };
+            this.editable[ingrediente.id] = this.toEditable(ingrediente);
           }
         },
         error: () => {
@@ -213,6 +262,15 @@ export class InventarioComponent implements OnInit {
     }
 
     return fallback;
+  }
+
+  private toEditable(ingrediente: Ingrediente): EditableIngrediente {
+    return {
+      nombre: ingrediente.nombre,
+      unidad_medida: ingrediente.unidad_medida,
+      stock_libras: ingrediente.stock_libras,
+      stock_minimo: ingrediente.stock_minimo,
+    };
   }
 
   unidadLabel(unidad: UnidadMedida): string {

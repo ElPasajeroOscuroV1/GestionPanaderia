@@ -5,7 +5,10 @@
       <h1>Inventario</h1>
       <p class="sub">Controla consumo por receta y stock en tiempo real.</p>
       <div class="session-box">
-        <span>{{ currentUser?.name || 'Usuario' }}</span>
+        <div class="session-meta">
+          <span>{{ currentUser?.name || 'Usuario' }}</span>
+          <small class="role-chip">{{ rolLabel }}</small>
+        </div>
         <button type="button" (click)="logout()">Salir</button>
       </div>
     </div>
@@ -13,16 +16,17 @@
     <nav class="menu">
       <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
       <a routerLink="/inventario" routerLinkActive="active">Inventario</a>
-      <a routerLink="/compras" routerLinkActive="active">Compras</a>
+      <a *ngIf="isAdmin" routerLink="/compras" routerLinkActive="active">Compras</a>
       <a routerLink="/recetas" routerLinkActive="active">Recetas</a>
       <a routerLink="/produccion" routerLinkActive="active">Produccion</a>
+      <a *ngIf="isAdmin" routerLink="/reportes" routerLinkActive="active">Reportes</a>
     </nav>
 
     <div class="legend">
       <p>Flujo recomendado:</p>
       <ol>
         <li>Registra ingredientes</li>
-        <li>Registra compras</li>
+        <li *ngIf="isAdmin">Registra compras</li>
         <li>Define recetas</li>
         <li>Registra produccion</li>
       </ol>

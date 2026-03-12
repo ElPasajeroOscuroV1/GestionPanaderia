@@ -31,6 +31,12 @@ class AuthController extends Controller
             ], 401);
         }
 
+        if (!in_array($user->rol, ['admin', 'panadero'], true)) {
+            return response()->json([
+                'error' => 'Este usuario no tiene acceso al sistema.',
+            ], 403);
+        }
+
         $plainToken = Str::random(80);
 
         $token = ApiToken::create([
@@ -49,6 +55,7 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'rol' => $user->rol,
             ],
         ]);
     }
@@ -61,6 +68,7 @@ class AuthController extends Controller
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
+            'rol' => $user->rol,
         ]);
     }
 

@@ -23,7 +23,7 @@ class IngredienteController extends Controller
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:120', 'unique:ingredientes,nombre'],
             'unidad_medida' => ['required', Rule::in(Ingrediente::UNIDADES_MEDIDA)],
-            'stock_libras' => ['required', 'numeric', 'min:0'],
+            'stock_libras' => ['required', 'numeric', 'min:0.01'],
             'stock_minimo' => ['nullable', 'numeric', 'min:0'],
         ]);
 
@@ -52,7 +52,7 @@ class IngredienteController extends Controller
                 Rule::unique('ingredientes', 'nombre')->ignore($ingrediente->id),
             ],
             'unidad_medida' => ['required', Rule::in(Ingrediente::UNIDADES_MEDIDA)],
-            'stock_libras' => ['required', 'numeric', 'min:0'],
+            'stock_libras' => ['required', 'numeric', 'min:0.01'],
             'stock_minimo' => ['nullable', 'numeric', 'min:0'],
         ]);
 

@@ -24,6 +24,15 @@
   background: linear-gradient(145deg, #fff8ef 0%, #fff 100%);
 }
 
+.notice-panel {
+  margin-bottom: 0.6rem;
+}
+
+.read-only-note {
+  margin: 0.5rem 0 0;
+  color: #6f5a44;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -90,7 +99,7 @@ button.danger {
 }
 
 .msg {
-  margin: 0.8rem 0 0;
+  margin: 0 0 0.75rem;
   font-weight: 700;
 }
 
@@ -170,6 +179,22 @@ td small {
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.readonly-value {
+  display: inline-block;
+  min-height: 1.25rem;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+button.secondary {
+  background: #dfd6c8;
+  color: #4d3d2b;
 }
 
 .status {

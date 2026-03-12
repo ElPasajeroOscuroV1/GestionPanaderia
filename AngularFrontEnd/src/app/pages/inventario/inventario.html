@@ -5,7 +5,7 @@
   </div>
 </section>
 
-<section class="panel form-panel">
+<section class="panel form-panel" *ngIf="canManageInventario">
   <h2>Nuevo ingrediente</h2>
   <div class="form-grid">
     <label>
@@ -24,7 +24,7 @@
 
     <label>
       Stock inicial
-      <input type="number" min="0" step="0.01" [(ngModel)]="nuevoStock" />
+      <input type="number" min="0.01" step="0.01" [(ngModel)]="nuevoStock" />
     </label>
 
     <label>
@@ -38,10 +38,15 @@
       {{ saving ? 'Guardando...' : 'Agregar ingrediente' }}
     </button>
   </div>
-
-  <p class="msg ok" *ngIf="message">{{ message }}</p>
-  <p class="msg err" *ngIf="error">{{ error }}</p>
 </section>
+
+<section class="panel form-panel notice-panel" *ngIf="!canManageInventario">
+  <h2>Modo consulta</h2>
+  <p class="read-only-note">Tu perfil panadero solo puede consultar el inventario.</p>
+</section>
+
+<p class="msg ok" *ngIf="message">{{ message }}</p>
+<p class="msg err" *ngIf="error">{{ error }}</p>
 
 <section class="panel">
   <div class="alerts" *ngIf="ingredientesAgotados.length > 0 || ingredientesBajoStock.length > 0">
@@ -76,31 +81,48 @@
         <th>Equiv. libras</th>
         <th>Stock minimo</th>
         <th>Estado</th>
-        <th>Guardar</th>
-        <th>Eliminar</th>
+        <th *ngIf="canManageInventario">Acciones</th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let ingrediente of ingredientesFiltrados">
         <td>
-          <input type="text" [(ngModel)]="editable[ingrediente.id].nombre" />
+          <input *ngIf="isEditing(ingrediente.id)" type="text" [(ngModel)]="editable[ingrediente.id].nombre" />
+          <span *ngIf="!isEditing(ingrediente.id)" class="readonly-value">{{ editable[ingrediente.id].nombre }}</span>
         </td>
         <td>
-          <select [(ngModel)]="editable[ingrediente.id].unidad_medida">
+          <select *ngIf="isEditing(ingrediente.id)" [(ngModel)]="editable[ingrediente.id].unidad_medida">
             <option *ngFor="let unidad of unidadesMedida" [ngValue]="unidad">
               {{ unidadLabel(unidad) }}
             </option>
           </select>
+          <span *ngIf="!isEditing(ingrediente.id)" class="readonly-value">
+            {{ unidadLabel(editable[ingrediente.id].unidad_medida) }}
+          </span>
         </td>
         <td>
-          <input type="number" min="0" step="0.01" [(ngModel)]="editable[ingrediente.id].stock_libras" />
+          <input
+            *ngIf="isEditing(ingrediente.id)"
+            type="number"
+            min="0.01"
+            step="0.01"
+            [(ngModel)]="editable[ingrediente.id].stock_libras"
+          />
+          <span *ngIf="!isEditing(ingrediente.id)" class="readonly-value">{{ editable[ingrediente.id].stock_libras }}</span>
           <small>{{ editable[ingrediente.id].unidad_medida }}</small>
         </td>
         <td>
           <strong>{{ equivalenteLibras(ingrediente.id) }}</strong>
         </td>
         <td>
-          <input type="number" min="0" step="0.01" [(ngModel)]="editable[ingrediente.id].stock_minimo" />
+          <input
+            *ngIf="isEditing(ingrediente.id)"
+            type="number"
+            min="0"
+            step="0.01"
+            [(ngModel)]="editable[ingrediente.id].stock_minimo"
+          />
+          <span *ngIf="!isEditing(ingrediente.id)" class="readonly-value">{{ editable[ingrediente.id].stock_minimo }}</span>
           <small>{{ editable[ingrediente.id].unidad_medida }}</small>
         </td>
         <td>
@@ -108,11 +130,24 @@
           <span class="status warning" *ngIf="isBajoStock(ingrediente.id)">Bajo</span>
           <span class="status ok" *ngIf="isStockNormal(ingrediente.id)">Normal</span>
         </td>
-        <td>
-          <button type="button" class="ghost" (click)="updateIngrediente(ingrediente.id)">Guardar</button>
-        </td>
-        <td>
-          <button type="button" class="danger" (click)="deleteIngrediente(ingrediente)">Eliminar</button>
+        <td *ngIf="canManageInventario" class="actions-cell">
+          <button type="button" class="ghost" *ngIf="!isEditing(ingrediente.id)" (click)="startEdit(ingrediente)">
+            Editar
+          </button>
+          <button type="button" class="ghost" *ngIf="isEditing(ingrediente.id)" (click)="updateIngrediente(ingrediente.id)">
+            Guardar
+          </button>
+          <button
+            type="button"
+            class="ghost secondary"
+            *ngIf="isEditing(ingrediente.id)"
+            (click)="cancelEdit(ingrediente)"
+          >
+            Cancelar
+          </button>
+          <button type="button" class="danger" *ngIf="!isEditing(ingrediente.id)" (click)="deleteIngrediente(ingrediente)">
+            Eliminar
+          </button>
         </td>
       </tr>
     </tbody>

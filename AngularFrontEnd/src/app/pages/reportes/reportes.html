@@ -1,0 +1,158 @@
+<section class="page-head">
+  <div>
+    <h1>Reportes de gestion</h1>
+    <p>Analiza inventario, recetas y produccion en un solo modulo.</p>
+  </div>
+</section>
+
+<section class="panel form-panel">
+  <h2>Generar reporte</h2>
+
+  <div class="form-grid">
+    <label>
+      Tipo de reporte
+      <select [(ngModel)]="tipo" (ngModelChange)="onTipoChange()">
+        <option *ngFor="let option of tiposReporte" [ngValue]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+    </label>
+
+    <label *ngIf="isProduccion">
+      Fecha inicio
+      <input type="date" [(ngModel)]="fechaInicio" />
+    </label>
+
+    <label *ngIf="isProduccion">
+      Fecha fin
+      <input type="date" [(ngModel)]="fechaFin" />
+    </label>
+  </div>
+
+  <div class="actions">
+    <button type="button" [disabled]="loading" (click)="generarReporte()">
+      {{ loading ? 'Generando...' : 'Generar reporte' }}
+    </button>
+
+    <button type="button" class="ghost" [disabled]="loading || !reporte" (click)="exportarCsv()">
+      Exportar CSV
+    </button>
+  </div>
+
+  <p class="msg err" *ngIf="error">{{ error }}</p>
+</section>
+
+<section class="panel" *ngIf="reporte">
+  <h2>Resumen</h2>
+  <p class="summary-line">
+    Tipo: <strong>{{ reporte.tipo }}</strong>
+    | Generado: <strong>{{ reporte.generated_at | date: 'yyyy-MM-dd HH:mm' }}</strong>
+  </p>
+
+  <p class="summary-line" *ngIf="reporte.tipo === 'produccion'">
+    Rango: <strong>{{ reporte.filtros.fecha_inicio }}</strong> a <strong>{{ reporte.filtros.fecha_fin }}</strong>
+  </p>
+
+  <div class="summary-grid">
+    <article class="metric" *ngFor="let item of resumenEntries">
+      <h3>{{ item.label }}</h3>
+      <p>{{ item.value | number: '1.0-2' }}</p>
+    </article>
+  </div>
+</section>
+
+<section class="panel" *ngIf="reporte?.tipo === 'inventario'">
+  <h2>Reporte de inventario</h2>
+
+  <p class="empty" *ngIf="inventarioItems.length === 0">No hay ingredientes para mostrar.</p>
+
+  <table *ngIf="inventarioItems.length > 0">
+    <thead>
+      <tr>
+        <th>Ingrediente</th>
+        <th>Stock actual (lb)</th>
+        <th>Stock minimo (lb)</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of inventarioItems">
+        <td>{{ item.nombre_ingrediente }}</td>
+        <td>{{ item.stock_actual_libras | number: '1.2-2' }}</td>
+        <td>{{ item.stock_minimo_libras | number: '1.2-2' }}</td>
+        <td>
+          <span class="status" [class.critical]="item.estado === 'agotado'" [class.warning]="item.estado === 'bajo_stock'" [class.ok]="item.estado === 'normal'">
+            {{ estadoLabel(item.estado) }}
+          </span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="panel" *ngIf="reporte?.tipo === 'recetas'">
+  <h2>Reporte de recetas</h2>
+
+  <p class="empty" *ngIf="recetaItems.length === 0">No hay recetas para mostrar.</p>
+
+  <table *ngIf="recetaItems.length > 0">
+    <thead>
+      <tr>
+        <th>Receta</th>
+        <th>Ingrediente</th>
+        <th>Cantidad utilizada (lb por lote)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of recetaItems">
+        <td>{{ item.nombre_receta }}</td>
+        <td>{{ item.nombre_ingrediente }}</td>
+        <td>{{ item.cantidad_utilizada_libras | number: '1.2-2' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="panel" *ngIf="reporte?.tipo === 'produccion'">
+  <h2>Reporte de produccion</h2>
+
+  <p class="empty" *ngIf="produccionItems.length === 0">No hay producciones en el rango seleccionado.</p>
+
+  <table *ngIf="produccionItems.length > 0">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Receta</th>
+        <th>Cantidad producida</th>
+        <th>Ingrediente</th>
+        <th>Cantidad utilizada (lb)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of produccionItems">
+        <td>{{ item.fecha }}</td>
+        <td>{{ item.nombre_receta || '-' }}</td>
+        <td>{{ item.cantidad_producida }}</td>
+        <td>{{ item.nombre_ingrediente }}</td>
+        <td>{{ item.cantidad_utilizada_libras | number: '1.2-2' }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub-title" *ngIf="produccionResumenIngredientes.length > 0">Consumo acumulado por ingrediente</h3>
+
+  <table *ngIf="produccionResumenIngredientes.length > 0">
+    <thead>
+      <tr>
+        <th>Ingrediente</th>
+        <th>Cantidad total utilizada (lb)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of produccionResumenIngredientes">
+        <td>{{ item.nombre_ingrediente }}</td>
+        <td>{{ item.cantidad_total_utilizada_libras | number: '1.2-2' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</section>

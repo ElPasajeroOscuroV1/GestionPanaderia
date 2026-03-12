@@ -6,8 +6,9 @@ import { InventarioComponent } from './pages/inventario/inventario';
 import { ProduccionComponent } from './pages/produccion/produccion';
 import { RecetasComponent } from './pages/recetas/recetas';
 import { ComprasComponent } from './pages/compras/compras';
+import { ReportesComponent } from './pages/reportes/reportes';
 import { LoginComponent } from './pages/login/login';
-import { authGuard, guestGuard } from './guards/auth.guard';
+import { adminGuard, authGuard, guestGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -23,9 +24,10 @@ export const routes: Routes = [
     children: [
       { path: 'dashboard', component: Dashboard },
       { path: 'inventario', component: InventarioComponent },
-      { path: 'compras', component: ComprasComponent },
+      { path: 'compras', component: ComprasComponent, canActivate: [adminGuard] },
       { path: 'recetas', component: RecetasComponent },
       { path: 'produccion', component: ProduccionComponent },
+      { path: 'reportes', component: ReportesComponent, canActivate: [adminGuard] },
 
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
